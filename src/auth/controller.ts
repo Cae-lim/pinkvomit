@@ -85,13 +85,13 @@ export class AuthController {
     }
   }
 
-  static signup(req: Request, res: Response, next: NextFunction) {
+  static async signup(req: Request, res: Response, next: NextFunction) {
     try {
       const email = unsafeCheckValidation<string>(req.body.email);
       const password = unsafeCheckValidation<string>(req.body.password)
 
       const userService = new UserService(new UserRepository(), new BlogRepository());
-      userService.createUser(email, password);
+      await userService.createUser(email, password);
 
       next();
     } catch (error) {
@@ -154,6 +154,7 @@ export class AuthController {
       }
 
       res.clearCookie("sessionToken");
+      res.clearCookie("refreshToken");
 
       const sessionService = new SessionService(new SessionRepository(), new UserRepository(), new BlogRepository());
       const deleted = sessionService.deleteSession(req.token.uuid, req.user.id);

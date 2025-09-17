@@ -96,7 +96,7 @@ export function IsUser(user: object): user is User {
 export interface Session extends DB_OBJECT {
   userID: ID,
   selectedBlogID: ID | null,
-  expiresAt: number,
+  expiresAt: Date,
 }
 
 export function IsSession(session: object): session is Session {
@@ -138,6 +138,29 @@ export function IsBlog(blog: object): blog is Blog {
   if (!valid) {
     console.log("IsBlog failed", { blog });
   }
+  return valid;
+}
+
+export interface SummaryBlog {
+  id: ID,
+  userID: ID,
+  title: string
+}
+
+export function IsSummaryBlog(blog: object): blog is SummaryBlog {
+  const valid = (
+    "id" in blog &&
+    IsID(blog.id) &&
+    "userID" in blog &&
+    IsID(blog.userID) &&
+    "title" in blog &&
+    typeof blog.title === "string"
+  )
+
+  if (!valid) {
+    console.log("IsSummaryBlog failed", { blog });
+  }
+
   return valid;
 }
 
@@ -208,6 +231,27 @@ export function IsTimelinePost(post: object): post is TimelinePost {
     console.log("IsTimelinePost failed", { post });
   }
   return valid;
+}
+
+export interface Like extends DB_OBJECT {
+  postID: ID,
+  blogID: ID
+}
+
+export function IsLike(like: object): like is Like {
+  const valid = (
+    IsDBObject(like) &&
+    "postID" in like &&
+    IsID(like.postID) &&
+    "blogID" in like &&
+    IsID(like.blogID)
+  )
+
+  if (!valid) {
+    console.log("IsLike failed", { like });
+  }
+
+  return valid
 }
 
 export interface Comment extends DB_OBJECT {
@@ -372,8 +416,8 @@ export function IsAuthedRequest(req: Request): req is AuthedRequest {
 
 export interface DecodedJWT {
   uuid: ID,
-  exp: number,
-  iat: number
+  exp: Date,
+  iat: Date
 }
 
 export function IsDecodedJWT(token: object): token is DecodedJWT {
@@ -390,6 +434,11 @@ export function IsDecodedJWT(token: object): token is DecodedJWT {
     console.log("IsDecodedJWT failed", { token });
   }
   return valid;
+}
+
+export interface DecodedRefreshJWT {
+  refreshes: ID,
+  exp: Date,
 }
 
 export type GetProtectOptions = (req: any) => ProtectOptions;

@@ -1,8 +1,10 @@
-import { DecodedJWT } from "../types";
-
 import jsonwebtoken from "jsonwebtoken";
 
 const jwtSecret: string | undefined = process.env.jwtsecret || "";
+
+if (jwtSecret === "") {
+  throw new Error("JWT MISCONFIGURED")
+}
 
 if (!jwtSecret) {
   throw new Error("Missing jwtsecret in environment variables");

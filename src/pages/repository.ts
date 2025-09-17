@@ -2,17 +2,23 @@ import { parsePartial, QueryOptions, Repository } from "../repository";
 import { Page, ID } from "types";
 import database from "../database";
 import { ResultSetHeader } from "mysql2";
+import { Connection, Pool } from "mysql2/promise";
 
-export interface PagesRepositoryInterface extends Repository<Page> {
+export interface PageRepositoryInterface extends Repository<Page> {
   insert(page: { id: ID, content: string, title: string, blogID: ID }): Promise<Page | null>
 }
 
-export class PageRepository implements PagesRepositoryInterface {
+export class PageRepository implements PageRepositoryInterface {
   private readonly validFindValues = ["id", "blogID", "title"];
   private readonly validUpdateValues = ["content", "title"];
+  private conn: Pool | Connection = database;
+
+  setConnection(conn: Pool | Connection) {
+    this.conn = conn;
+  }
 
   async insert(page: Partial<Page>) {
-    await database.query<ResultSetHeader>("INSERT INTO pages (id, title, content, blogID) VALUES (?, ?, ?, ?)", [page.id, page.title, page.content, page.blogID]);
+    await this.conn.query<ResultSetHeader>("INSERT INTO pages (id, title, content, blogID) VALUES (?, ?, ?, ?)", [page.id, page.title, page.content, page.blogID]);
     return await this.findOne({ id: page.id });
   }
 
@@ -24,14 +30,14 @@ export class PageRepository implements PagesRepositoryInterface {
 
   async find(page: Partial<Page>, options: QueryOptions | {} = {}) {
     const { keyString, values } = parsePartial(page, this.validFindValues, options);
-    const [pages] = await database.query(`SELECT * FROM pages WHERE ${keyString}`, [...values]) as [Page[], any];
+    const [pages] = await this.conn.query(`SELECT * FROM pages WHERE ${keyString}`, [...values]) as [Page[], any];
 
     return pages.length > 0 ? pages : null;
   }
 
   async update(id: ID, page: Partial<Page>, options: QueryOptions | {} = {}) {
     const { keyString, values } = parsePartial(page, this.validUpdateValues, { ...options, joiner: ", " });
-    const [pageUpate] = await database.query<ResultSetHeader>(`UPDATE pages SET ${keyString} WHERE id = ?`, [...values, id]);
+    const [pageUpate] = await this.conn.query<ResultSetHeader>(`UPDATE pages SET ${keyString} WHERE id = ?`, [...values, id]);
 
     if (pageUpate.affectedRows === 0) return null;
 
@@ -39,7 +45,7 @@ export class PageRepository implements PagesRepositoryInterface {
   }
 
   async delete(id: ID) {
-    const [pageDelete] = await database.query<ResultSetHeader>("DELETE FROM posts WHERE id = ? ", [id]);
+    const [pageDelete] = await this.conn.query<ResultSetHeader>("DELETE FROM posts WHERE id = ? ", [id]);
 
     return pageDelete.affectedRows > 0;
   }

@@ -1,5 +1,5 @@
 import pino from 'pino';
-import { User, DecodedJWT, Blog } from '../../types.ts';
+import { User, DecodedJWT, Blog, SummaryBlog } from '../../types.ts';
 
 declare global {
   namespace Express {
@@ -7,8 +7,8 @@ declare global {
       user?: User | null,
       token?: DecodedJWT | null,
       authed?: boolean,
-      blogs?: Blog[],
-      selectedBlog?: Blog | null,
+      blogs?: SummaryBlog[],
+      selectedBlog?: SummaryBlog | null,
       logger: pino.Logger,
       requestId: string
       startTime: number

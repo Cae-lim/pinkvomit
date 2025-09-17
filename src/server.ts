@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 
-import { keepAlive, authenticate, fetchUser } from './auth/middleware';
+import { AuthMiddleware } from './auth/middleware';
 import render from './templating';
 
 import postsRouter from './posts/router';
@@ -65,12 +65,12 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 app.use(requestLoggerMiddleware);
-app.use(authenticate);
+app.use(AuthMiddleware.tryRefresh);
+app.use(AuthMiddleware.authenticate)
 app.use(addSessionToLogger);
-app.use(fetchUser);
+app.use(AuthMiddleware.fetchUser)
 app.use(addUserToLogger);
 app.use(addBlogToLogger);
-app.use(keepAlive);
 
 // basic example of how to render a page using the homepage.
 // other pages should have their own router 

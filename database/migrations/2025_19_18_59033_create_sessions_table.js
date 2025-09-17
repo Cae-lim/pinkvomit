@@ -8,7 +8,7 @@ module.exports = new class extends Migration {
     return await this.createTable('sessions',
       foreignKey("userID"),
       foreignKey("selectedBlogID", true),
-      this.unsignedBigInt('expiresAt').notNull(),
+      this.timestamp('expiresAt').notNull(),
       this.foreign("userID").references("id").on("users").onDelete('cascade'),
       this.foreign("selectedBlogID").references('id').on("blogs").onDelete('cascade'),
       uuids(),

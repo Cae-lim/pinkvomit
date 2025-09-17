@@ -66,7 +66,7 @@ export class UserService implements UserServiceInterface {
   }
 
   async emailInUse(email: string) {
-    const user = this.userRepository.findOne({ email });
+    const user = await this.userRepository.findOne({ email });
     return user !== null;
   }
 
@@ -148,7 +148,7 @@ export class SessionService implements SessionServiceInterface {
   async rotate(sessionID: ID, userID: ID, expires: Date): Promise<Session> {
     const connection = await database.getConnection();
     try {
-      connection.beginTransaction();
+      await connection.beginTransaction();
       this.sessionRepository.setConnection(connection);
 
       await this.deleteSession(sessionID, userID);
@@ -164,13 +164,14 @@ export class SessionService implements SessionServiceInterface {
         throw new Error("Couldn't create session");
       }
 
-      connection.commit();
-      this.sessionRepository.setConnection(database);
-
+      await connection.commit();
       return session;
     } catch (error) {
       await connection.rollback();
       throw error;
+    } finally {
+      connection.release();
+      this.sessionRepository.setConnection(database);
     }
   }
 }

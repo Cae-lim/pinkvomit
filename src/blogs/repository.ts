@@ -2,17 +2,27 @@ import { parsePartial, QueryOptions, Repository } from "src/repository";
 import { Blog, ID } from "types";
 import database from "../database";
 import { ResultSetHeader } from "mysql2";
+import { Connection, Pool } from "mysql2/promise";
 
-export interface BlogsRepositoryInterface extends Repository<Blog> {
-
+export interface BlogRepositoryInterface extends Repository<Blog> {
+  insert(blog: {
+    id: ID,
+    title: string,
+    userID: ID
+  }): Promise<Blog | null>
 }
 
-export class BlogsRepository implements BlogsRepositoryInterface {
+export class BlogRepository implements BlogRepositoryInterface {
   private readonly validFindValues = ["id", "userID", "title"];
   private readonly validUpdateValues = ["title", "stylesheet"];
+  private conn: Pool | Connection = database;
 
-  async insert(blog: Blog): Promise<Blog | null> {
-    await database.query("INSERT INTO blogs (id, title, userID) VALUES (?, ?, ?)", [blog.id, blog.title, blog.userID]);
+  setConnection(conn: Pool | Connection) {
+    this.conn = conn;
+  }
+
+  async insert(blog: Partial<Blog>): Promise<Blog | null> {
+    await this.conn.query("INSERT INTO blogs (id, title, userID) VALUES (?, ?, ?)", [blog.id, blog.title, blog.userID]);
 
     return await this.findOne(blog);
   }
@@ -20,7 +30,7 @@ export class BlogsRepository implements BlogsRepositoryInterface {
   async find(blog: Partial<Blog>, options: QueryOptions | {} = {}): Promise<Blog[] | null> {
     const { keyString, values } = parsePartial<Blog>(blog, this.validFindValues, options);
 
-    const [blogResult] = await database.query(`SELECT * FROM blogs WHERE ${keyString}`, [...values]) as [Blog[], any]
+    const [blogResult] = await this.conn.query(`SELECT * FROM blogs WHERE ${keyString}`, [...values]) as [Blog[], any]
 
     return blogResult.length > 0 ? blogResult : null;
   }
@@ -32,7 +42,7 @@ export class BlogsRepository implements BlogsRepositoryInterface {
   }
 
   async delete(id: ID): Promise<boolean> {
-    const [deleteBlog] = await database.query<ResultSetHeader>("DELETE FROM blogs WHERE id = ?", [id]);
+    const [deleteBlog] = await this.conn.query<ResultSetHeader>("DELETE FROM blogs WHERE id = ?", [id]);
 
     return deleteBlog.affectedRows > 0;
   }
@@ -40,13 +50,13 @@ export class BlogsRepository implements BlogsRepositoryInterface {
   async update(id: ID, blog: Partial<Blog>, options: QueryOptions | {} = {}): Promise<Blog | null> {
     const { keyString, values } = parsePartial<Blog>(blog, this.validUpdateValues, { ...options, joiner: ", " });
 
-    const [updateBlog] = await database.query<ResultSetHeader>(`UPDATE blogs SET ${keyString} WHERE id = ?`, [...values, id]);
+    const [updateBlog] = await this.conn.query<ResultSetHeader>(`UPDATE blogs SET ${keyString} WHERE id = ?`, [...values, id]);
 
     if (updateBlog.affectedRows === 0) {
       return null;
     }
 
-    const [[resultBlog]] = await database.query(`SELECT * FROM blogs WHERE id = ?`, [id]) as [Blog[], any];
+    const [[resultBlog]] = await this.conn.query(`SELECT * FROM blogs WHERE id = ?`, [id]) as [Blog[], any];
 
     return resultBlog || null;
   }

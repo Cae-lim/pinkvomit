@@ -10,7 +10,7 @@ import { TokenExpiredError } from 'jsonwebtoken';
 
 export function getRefeshToken(id: ID): DecodedRefreshJWT {
   let expires = new Date();
-  expires.setDate(expires.getTime() + maxRefreshAge);
+  expires.setTime(expires.getTime() + maxRefreshAge);
   return {
     refreshes: id,
     exp: expires
@@ -19,7 +19,7 @@ export function getRefeshToken(id: ID): DecodedRefreshJWT {
 
 export function getSessionExpiry(): Date {
   const expires = new Date();
-  expires.setDate(expires.getTime() + maxSessionAge);
+  expires.setTime(expires.getTime() + maxSessionAge);
   return expires;
 }
 
@@ -75,7 +75,7 @@ export class AuthMiddleware {
         }
       }
 
-      if ("refreshToken" in req.cookies && req.cookies.refreshToken !== undefined && req.cookies.sessionToken !== null) {
+      if ("refreshToken" in req.cookies && req.cookies.refreshToken !== undefined && req.cookies.refreshToken !== null) {
         const sessionService = new SessionService(new SessionRepository(), new UserRepository(), new BlogRepository());
 
         const refreshToken = signer.verify<DecodedRefreshJWT>(req.cookies.refreshToken);

@@ -1,3 +1,4 @@
+import { Connection, Pool } from "mysql2/promise";
 import pino from "pino";
 import { ID } from "types";
 
@@ -7,6 +8,7 @@ export interface Repository<T> {
   delete(id: ID): Promise<boolean>;
   find(object: Partial<T>, options?: QueryOptions): Promise<T[] | null>;
   findOne(object: Partial<T>, options?: QueryOptions): Promise<T | null>;
+  setConnection(conn: Pool | Connection): void
 }
 
 export interface QueryOptions {
